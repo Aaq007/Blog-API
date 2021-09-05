@@ -35,10 +35,10 @@ class CustomUserManager(BaseUserManager):
 
 class User(PermissionsMixin, AbstractBaseUser):
     """Custom User model that identifies user by User ID"""
-    name = models.CharField(verbose_name='User name',
-                            max_length=255, null=True, blank=True)
     user_id = models.CharField(
         verbose_name='User ID', unique=True, max_length=32)
+    name = models.CharField(verbose_name='User name',
+                            max_length=255, null=True, blank=True)
     email = models.EmailField(
         max_length=255, verbose_name='Email address', null=True, blank=True)
     is_active = models.BooleanField(default=True)
