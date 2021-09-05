@@ -79,7 +79,7 @@ class Comment(models.Model):
     comment = models.CharField(
         verbose_name='Comment', max_length=255)
     post = models.ForeignKey(Post, verbose_name='Post',
-                             on_delete=models.CASCADE)
+                             on_delete=models.CASCADE, null=False, blank=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self) -> str:
