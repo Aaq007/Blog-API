@@ -74,6 +74,10 @@ class Post(models.Model):
     def __str__(self):
         return self.topic
 
+    @property
+    def comment_count(self):
+        return self.post_comments.count()
+
 
 class Comment(models.Model):
     comment = models.CharField(
@@ -83,8 +87,9 @@ class Comment(models.Model):
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='comment_user')
 
-    class Meta:
-        unique_together = ['comment', 'post']
-
     def __str__(self) -> str:
         return self.comment
+
+    @property
+    def comment_user(self):
+        return self.user.user_id
