@@ -1,5 +1,5 @@
 from django.urls import path, include
-from .views import CommentListView, UserCreateview, UserListView, PostListView, UserUpdateView
+from .views import CommentListView, CommentUpdateView, PostUpdateView, UserCreateview, UserListView, PostListView, UserUpdateView
 
 from rest_framework import routers
 
@@ -13,7 +13,11 @@ urlpatterns = [
     path("users/", UserListView.as_view()),
     path("users/<int:pk>", UserUpdateView.as_view()),
     path("usercreate/", UserCreateview.as_view()),
+
     path("posts/", PostListView.as_view()),
+    path("posts/<int:pk>", PostUpdateView.as_view()),
+
     path("comments/", CommentListView.as_view()),
+    path("comments/<int:pk>", CommentUpdateView.as_view()),
 
 ]

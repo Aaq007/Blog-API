@@ -68,19 +68,28 @@ class User(PermissionsMixin, AbstractBaseUser):
 class Post(models.Model):
     topic = models.CharField(verbose_name='Post topic', max_length=255)
     user = models.ForeignKey(
-        User, verbose_name='Post author', on_delete=models.CASCADE)
+        User, verbose_name='Post author', on_delete=models.CASCADE, related_name='post_user')
     content = models.CharField(verbose_name='Post content', max_length=255)
 
     def __str__(self):
         return self.topic
 
+    @property
+    def comment_count(self):
+        return self.post_comments.count()
+
 
 class Comment(models.Model):
     comment = models.CharField(
         verbose_name='Comment', max_length=255)
-    post = models.ForeignKey(Post, verbose_name='Post',
+    post = models.ForeignKey(Post, verbose_name='Post', related_name='post_comments',
                              on_delete=models.CASCADE, null=False, blank=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='comment_user')
 
     def __str__(self) -> str:
         return self.comment
+
+    @property
+    def comment_user(self):
+        return self.user.user_id
