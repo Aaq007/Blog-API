@@ -1,3 +1,4 @@
+from wsgiref.handlers import read_environ
 from django.db import models
 from django.contrib.auth.models import PermissionsMixin
 from django.contrib.auth.base_user import BaseUserManager, AbstractBaseUser
@@ -59,10 +60,10 @@ class User(PermissionsMixin, AbstractBaseUser):
         return self.name
 
     def has_perm(self, perm, obj=None):
-        return super().has_perm(perm, obj=obj)
+        return self.is_staff
 
     def has_module_perms(self, app_label: str) -> bool:
-        return super().has_module_perms(app_label)
+        return self.is_staff
 
 
 class Post(models.Model):
@@ -77,6 +78,14 @@ class Post(models.Model):
     @property
     def comment_count(self):
         return self.post_comments.count()
+
+    @property
+    def post_user(self):
+        return self.user.user_id
+
+    @property
+    def post_comments(self):
+        return f"{self.post_comments.user}"
 
 
 class Comment(models.Model):

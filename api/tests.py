@@ -1,4 +1,3 @@
-from pdb import post_mortem
 from django.test import TestCase
 from .models import User, Post, Comment
 
