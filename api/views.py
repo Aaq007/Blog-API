@@ -1,20 +1,16 @@
-from django.http import JsonResponse
-from django.shortcuts import render
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, permissions, status
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework.viewsets import ViewSet
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.authtoken.models import Token
 from rest_framework.authentication import TokenAuthentication
+from rest_framework.authtoken.models import Token
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
 
 from .models import Comment, Post, User
 from .permissions import IsAuthorOrReadOnly, IsUserOrReadOnly
-from .serializers import (CommentCreateSerializer, CommentSerializer,
-                          PostCreateSerializer, PostSerializer,
-                          UserPasswordChangeSerializer, UserRegisterSerializer,
-                          UserSerializer)
+from .serializers import (CommentCreateSerializer, CommentPostSerializer,
+                          CommentSerializer, PostCreateSerializer,
+                          PostSerializer, UserPasswordChangeSerializer,
+                          UserRegisterSerializer, UserSerializer)
 
 # Create your views here.
 
@@ -22,7 +18,7 @@ from .serializers import (CommentCreateSerializer, CommentSerializer,
 @api_view(['GET'])
 @permission_classes([permissions.AllowAny])
 def APIOverview(request):
-    return Response({'Hello'})
+    return Response({'Hello': 'world'})
 
 
 class UserListView(generics.ListAPIView):
@@ -60,8 +56,6 @@ def UserProfileEdit(request, *args, **kwargs):
         if serializer.is_valid():
             serializer.save()
             return Response(data='Success')
-    # else:
-    #     return Response('Only for registered users')
     return Response('Not success')
 
 
@@ -71,8 +65,10 @@ class UserCreateview(generics.CreateAPIView):
     permission_classes = (permissions.AllowAny,)
 
     def create(self, request, *args, **kwargs):
-        super().create(request, *args, **kwargs)
-        return Response({'success'}, status=status.HTTP_201_CREATED)
+        response = super().create(request, *args, **kwargs)
+        print(response.data)
+        token, _ = Token.objects.get_or_create(user=response.data['id'])
+        return Response(({token.key}))
 
 
 class UserUpdateView(generics.RetrieveUpdateDestroyAPIView):
@@ -83,6 +79,7 @@ class UserUpdateView(generics.RetrieveUpdateDestroyAPIView):
 
 class PostListView(generics.ListCreateAPIView):
     permission_classes = (IsAuthorOrReadOnly,)
+    queryset = Post.objects.all()
 
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('user',)
@@ -93,16 +90,6 @@ class PostListView(generics.ListCreateAPIView):
         else:
             return PostSerializer
 
-    def get_queryset(self):
-        if self.request.method == 'POST':
-            return Post.objects.filter(user=self.request.user)
-        else:
-            return Post.objects.all()
-
-    def create(self, request, *args, **kwargs):
-        super().create(request, *args, **kwargs)
-        return Response(status=status.HTTP_201_CREATED)
-
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=self.get_success_headers(serializer.data))
@@ -112,12 +99,6 @@ class PostUpdateView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Post.objects.all()
     serializer_class = PostCreateSerializer
     permission_classes = (IsAuthorOrReadOnly,)
-
-    def patch(self, request, *args, **kwargs):
-        return self.partial_update(request, *args, **kwargs)
-
-    def get_queryset(self):
-        return Post.objects.filter(user=self.request.user)
 
 
 class CommentListView(generics.ListCreateAPIView):
@@ -135,11 +116,23 @@ class CommentListView(generics.ListCreateAPIView):
             return CommentSerializer
 
     def perform_create(self, serializer):
-        return serializer.save(user=self.request.user)
-    # def per
+        serializer.save(user=self.request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=self.get_success_headers(serializer.data))
 
 
 class CommentUpdateView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Comment.objects.all()
     serializer_class = CommentCreateSerializer
     permission_classes = (IsAuthorOrReadOnly,)
+
+
+class CommentPostView(generics.ListAPIView):
+    serializer_class = CommentPostSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_object(self, *args, **kwargs):
+        return Post.objects.get(id=self.kwargs.get('pk'))
+
+    def get_queryset(self):
+        post = self.get_object()
+        return Comment.objects.filter(post=post)

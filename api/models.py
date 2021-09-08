@@ -1,7 +1,10 @@
-from wsgiref.handlers import read_environ
-from django.db import models
+from django.conf import settings
+from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
-from django.contrib.auth.base_user import BaseUserManager, AbstractBaseUser
+from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from rest_framework.authtoken.models import Token
 
 # Create your models here.
 
@@ -64,6 +67,12 @@ class User(PermissionsMixin, AbstractBaseUser):
 
     def has_module_perms(self, app_label: str) -> bool:
         return self.is_staff
+
+
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def create_auth_token(sender, instance=None, created=False, **kwargs):
+    if created:
+        Token.objects.get_or_create(user=instance)
 
 
 class Post(models.Model):
